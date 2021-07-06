@@ -1,4 +1,5 @@
 from os.path import basename
+import os
 import gpxpy
 import gpxpy.gpx
 from scipy.stats import skewtest
@@ -8,7 +9,6 @@ import matplotlib
 import cartopy.crs as ccrs
 import cartopy.io.img_tiles as cimgt
 from scipy.signal import savgol_filter
-
 
 def read_gpx(path: str):
     # Read the data
@@ -88,7 +88,7 @@ def scatterplot(points_in, points_out, cmap, clim):
 def mapplot(points_in, points_out, cmap, clim):
     cmin, cmax = clim
     speeds_in, speeds_out = [p.speed for p in points_in], [p.speed for p in points_out]
-    stamen_terrain = cimgt.StamenTerrain()
+    stamen_terrain = cimgt.Stamen('terrain-background')
     ax = plt.subplot(1, 2, 2, projection=stamen_terrain.crs)
 
     extent = get_map_extent(points)
@@ -98,11 +98,16 @@ def mapplot(points_in, points_out, cmap, clim):
     detail = int(11 + np.floor(np.abs(np.log10(area / 5))))
     ax.add_image(stamen_terrain, detail)
 
+    # plt.scatter([p.longitude for p in points_in], [p.latitude for p in points_in],
+    #            c=speeds_in, s=15, transform=ccrs.Geodetic(), cmap=cmap, vmin=cmin, vmax=cmax)
     plt.scatter([p.longitude for p in points_in], [p.latitude for p in points_in],
-                c=speeds_in, s=15, transform=ccrs.Geodetic(), cmap=cmap, vmin=cmin, vmax=cmax)
+                c=speeds_in, s=15, transform=ccrs.PlateCarree(), cmap=cmap, vmin=cmin, vmax=cmax)
+    
     if len(points_out):
+        # plt.scatter([p.longitude for p in points_out], [p.latitude for p in points_out],
+        #            c='r', s=3, transform=ccrs.Geodetic())
         plt.scatter([p.longitude for p in points_out], [p.latitude for p in points_out],
-                    c='r', s=3, transform=ccrs.Geodetic())
+                    c='r', s=3, transform=ccrs.PlateCarree())
 
 
 fname = r'C:\Users\mgpoirot\Downloads\Lunch_Ride.gpx'
@@ -114,6 +119,7 @@ fname = r"C:\Users\mgpoirot\Downloads\Morning_Ride(1).gpx"
 #fname = r"C:\Users\mgpoirot\Downloads\Morning_Run.gpx"
 #fname = r"C:\Users\mgpoirot\Downloads\Lunch_Run.gpx"
 #fname = r"C:\Users\mgpoirot\Downloads\Afternoon_Ride(1).gpx"
+fname = r"D:\repositories\GPEX\Afternoon_Ride.gpx"
 points = read_gpx(fname)
 speeds = [p.speed for p in points]
 
@@ -132,4 +138,17 @@ plt.subplot(2, 2, 3)
 scatterplot(points_in, points_out, cmap, clim)
 mapplot(points_in, points_out, cmap, clim)
 plt.suptitle(basename(fname))
+
+
+figure_name = fname.split(os.extsep)[0] + '{}.png'
+extension = ''
+if os.path.isfile(figure_name.format(extension)):
+    extension = 1
+    while os.path.isfile(figure_name.format(str(extension))):
+        extension += 1
+plt.savefig(figure_name.format(str(extension)))
+
 plt.show()
+do_save = input('Do you want to save the figure? ')
+if do_save not in 'Yesyes':
+    os.remove(figure_name.format(str(extension)))
