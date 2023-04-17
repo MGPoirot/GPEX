@@ -1,2 +1,4 @@
 # GPX-Machina
-For all your GPX related shenanigans 
+Visualiation of GPX logs on map.
+
+![example](figure.png)
